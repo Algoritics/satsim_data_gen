@@ -237,8 +237,11 @@ def main(**kwargs):
         sensor_dirs = glob.glob(os.path.join(FLAGS.data_bank_dir, "sensor_*"))
 
         # Then take the suffix post "sensor_", int it, max it, and add 1.
-        sensor_nums = [int(s.split("sensor_")[-1]) for s in sensor_dirs]
-        sensor_num = np.max(sensor_nums) + 1
+        if sensor_dirs:
+            sensor_nums = [int(s.split("sensor_")[-1]) for s in sensor_dirs]
+            sensor_num = np.max(sensor_nums) + 1
+        else:
+            sensor_num = 0
 
         # construct the new sensor name, and make a dir name to hold its data.
         sensor_name_str = "sensor_" + str(sensor_num)
