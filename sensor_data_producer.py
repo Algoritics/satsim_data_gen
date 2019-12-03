@@ -5,18 +5,14 @@ date: 20 Jun 2019
 
 
 import os
-
 import json
-
 import shutil
-
 import argparse
-
 import subprocess
-
+import multiprocessing
 import numpy as np
-
 import tensorflow as tf
+from itertools import cycle
 
 # I am launched on a node with one param: num_samples
 
@@ -87,12 +83,26 @@ def make_clean_dir(directory):
     os.makedirs(directory)
 
 
+def mp_worker(cmd_str):
+    """Launches a process."""
+    print(cmd_str)
+    process = subprocess.Popen(cmd_str, shell=True, stdout=subprocess.PIPE)
+    process.wait()
+    print(process.returncode)
+
+
+def mp_handler(num_procs, cmd_str_list):
+    """Handles mapping processes to pool."""
+    pool = multiprocessing.Pool(num_procs)
+    pool.map(mp_worker, cmd_str_list)
+
+
 def main(**kwargs):
 
     cmd_strings = list()
 
     # Generate a new config file randomly selecting from an FPA config.
-    for sensor_num in range(FLAGS.num_sensors):
+    for sensor_num, device_num in zip(range(FLAGS.num_sensors), cycle(FLAGS.device)):
 
         with open(FLAGS.config_file_path, 'r') as f:
 
@@ -121,22 +131,15 @@ def main(**kwargs):
 
         if FLAGS.debug_satsim:
 
-            cmd_str = "satsim --debug DEBUG run --device " + str(FLAGS.device) + " --mode eager --output_dir " + sensor_dir + " " + output_config_file
+            cmd_str = "satsim --debug DEBUG run --device " + str(device_num) + " --mode eager --output_dir " + sensor_dir + " " + output_config_file
 
         else:
 
-            cmd_str = "satsim run --device " + str(FLAGS.device) + " --mode eager --output_dir " + sensor_dir + " " + output_config_file
+            cmd_str = "satsim run --device " + str(device_num) + " --mode eager --output_dir " + sensor_dir + " " + output_config_file
 
         cmd_strings.append(cmd_str)
-
-    # Iterate over the commands...
-    for cmd_str in cmd_strings:
-
-        # ...sequentially launching each.
         print(cmd_str)
-        process = subprocess.Popen(cmd_str, shell=True, stdout=subprocess.PIPE)
-        process.wait()
-        print(process.returncode)
+    mp_handler(FLAGS.num_procs, cmd_strings)
 
 
 if __name__ == '__main__':
@@ -178,13 +181,17 @@ if __name__ == '__main__':
                         default=6,
                         help='The number of frames to use in each sequence.')
 
-    parser.add_argument('--device', type=int,
+    parser.add_argument('--device', type=int, nargs='+',
                         default=0,
-                        help='Number of the GPU use.')
+                        help='Number of the GPU(s) to use.')
 
     parser.add_argument('--debug_satsim', action='store_true',
                         default=False,
                         help='If true, write annotated JPEGs to disk.')
+
+    parser.add_argument('--num_procs', type=int,
+                        default=1,
+                        help='Number of parallel processes to spawn.')
 
     FLAGS = parser.parse_args()
 
