@@ -131,11 +131,15 @@ def main(**kwargs):
 
         if FLAGS.debug_satsim:
 
-            cmd_str = "satsim --debug DEBUG run --device " + str(device_num) + " --mode eager --output_dir " + sensor_dir + " " + output_config_file
+            cmd_str = "satsim --debug DEBUG run --device " + str(device_num) \
+                + "--memory " + str(FLAGS.memory) + " --mode eager " \
+                + "--output_dir " + sensor_dir + " " + output_config_file
 
         else:
 
-            cmd_str = "satsim run --device " + str(device_num) + " --mode eager --output_dir " + sensor_dir + " " + output_config_file
+            cmd_str = "satsim run --device " + str(device_num) \
+                + "--memory " + str(FLAGS.memory) + " --mode eager " \
+                + "--output_dir " + sensor_dir + " " + output_config_file
 
         cmd_strings.append(cmd_str)
         print(cmd_str)
@@ -191,7 +195,11 @@ if __name__ == '__main__':
 
     parser.add_argument('--num_procs', type=int,
                         default=1,
-                        help='Number of parallel processes to spawn.')
+                        help='Number of parallel jobs to spawn over all GPUs.')
+
+    parser.add_argument('--memory', type=int,
+                        default=7000,
+                        help='Max memory use per job in MB. Default = 7000 MB.')
 
     FLAGS = parser.parse_args()
 
