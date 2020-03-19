@@ -132,13 +132,13 @@ def main(**kwargs):
         if FLAGS.debug_satsim:
 
             cmd_str = "satsim --debug DEBUG run --device " + str(device_num) \
-                + "--memory " + str(FLAGS.memory) + " --mode eager " \
+                + " --memory " + str(FLAGS.memory) + " --mode eager " \
                 + "--output_dir " + sensor_dir + " " + output_config_file
 
         else:
 
             cmd_str = "satsim run --device " + str(device_num) \
-                + "--memory " + str(FLAGS.memory) + " --mode eager " \
+                + " --memory " + str(FLAGS.memory) + " --mode eager " \
                 + "--output_dir " + sensor_dir + " " + output_config_file
 
         cmd_strings.append(cmd_str)
