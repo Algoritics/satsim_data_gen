@@ -14,17 +14,17 @@
         "x_fov": 1.0,
         "dark_current": 20,
         "gain": 1,
-        "bias": 100,
+        "bias": 0,
         "zeropoint": 23.497,
         "a2d": {
             "response": "linear",
             "fwc": 200000,
-            "gain": 12.2,
-            "bias": 10
+            "gain": 1,
+            "bias": 0
         },
         "noise": {
-            "read": 11,
-            "electronic": 14
+            "read": 0,
+            "electronic": 0
         },
         "psf": {
             "mode": "gaussian",
