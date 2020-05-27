@@ -97,25 +97,25 @@ def mp_handler(num_procs, cmd_str_list):
     pool.map(mp_worker, cmd_str_list)
 
 
-def main(**kwargs):
+def main(flags, **kwargs):
 
     cmd_strings = list()
 
     # Generate a new config file randomly selecting from an FPA config.
-    for sensor_num, device_num in zip(range(FLAGS.num_sensors), cycle(FLAGS.device)):
+    for sensor_num, device_num in zip(range(flags.num_sensors), cycle(flags.device)):
 
-        with open(FLAGS.config_file_path, 'r') as f:
+        with open(flags.config_file_path, 'r') as f:
 
             # Read the base config file which randomizes over other properties.
             base_config_dict = json.load(f)
 
-        config_dict = build_sensor_config(FLAGS.num_samples,
-                                          FLAGS.num_frames_per_sample,
+        config_dict = build_sensor_config(flags.num_samples,
+                                          flags.num_frames_per_sample,
                                           base_config_dict)
 
         # Create a directory for this sensors runs.
         sensor_name_str = "sensor_" + str(sensor_num)
-        sensor_dir = os.path.join(FLAGS.output_dir, sensor_name_str)
+        sensor_dir = os.path.join(flags.output_dir, sensor_name_str)
 
         # Clear this sensor dir if it exists, then make it.
         make_clean_dir(sensor_dir)
@@ -129,21 +129,21 @@ def main(**kwargs):
 
             json.dump(config_dict, fp)
 
-        if FLAGS.debug_satsim:
+        if flags.debug_satsim:
 
             cmd_str = "satsim --debug DEBUG run --device " + str(device_num) \
-                + " --memory " + str(FLAGS.memory) + " --mode eager " \
+                + " --memory " + str(flags.memory) + " --mode eager " \
                 + "--output_dir " + sensor_dir + " " + output_config_file
 
         else:
 
             cmd_str = "satsim run --device " + str(device_num) \
-                + " --memory " + str(FLAGS.memory) + " --mode eager " \
+                + " --memory " + str(flags.memory) + " --mode eager " \
                 + "--output_dir " + sensor_dir + " " + output_config_file
 
         cmd_strings.append(cmd_str)
         print(cmd_str)
-    mp_handler(FLAGS.num_procs, cmd_strings)
+    mp_handler(flags.num_procs, cmd_strings)
 
 
 if __name__ == '__main__':
@@ -154,53 +154,35 @@ if __name__ == '__main__':
 
     # Set arguments and their default values
     parser.add_argument('--config_file_path', type=str,
-                        default="/home/jfletcher/research/satsim_data_gen/satsim.json",
+                        default="satsim.json",
                         help='Path to the JSON config for SatSim.')
-
     parser.add_argument('--output_dir', type=str,
-                        default="/home/jfletcher/data/satsim_data_gen/",
+                        default="output/",
                         help='Path to the JSON config for SatSim.')
-
-    # parser.add_argument('--config_file_path', type=str,
-    #                     default="C:\\research\\satsim_data_gen\\sensor_data_config.json",
-    #                     help='Path to the JSON config for SatSim.')
-
-    # parser.add_argument('--output_dir', type=str,
-    #                     default="C:\\data\\satsim_data_gen\\",
-    #                     help='Path to the JSON config for SatSim.')
-
     parser.add_argument('--num_sensors', type=int,
                         default=16,
                         help='The number of sensors to simulate.')
-
     parser.add_argument('--num_samples', type=int,
                         default=8,
                         help='The number of samples from each sensor.')
-
     parser.add_argument('--num_frames_per_sample', type=int,
                         default=1,
-                        help='The number of samples from each sensor.')
-
+                        help='The number of image frames in each sample.')
     parser.add_argument('--num_frames', type=int,
                         default=6,
                         help='The number of frames to use in each sequence.')
-
     parser.add_argument('--device', type=int, nargs='+',
                         default=0,
                         help='Number of the GPU(s) to use.')
-
     parser.add_argument('--debug_satsim', action='store_true',
                         default=False,
                         help='If true, write annotated JPEGs to disk.')
-
     parser.add_argument('--num_procs', type=int,
                         default=1,
                         help='Number of parallel jobs to spawn over all GPUs.')
-
     parser.add_argument('--memory', type=int,
                         default=7000,
                         help='Max memory use per job in MB. Default = 7000 MB.')
 
-    FLAGS = parser.parse_args()
-
-    main()
+    flags = parser.parse_args()
+    main(flags)
