@@ -77,7 +77,7 @@ def build_sensor_config(num_samples, num_frames_per_sample, base_config_dict):
 
 
 def make_clean_dir(directory):
-
+    """Cleans and makes a specified directory tree."""
     if os.path.exists(directory):
         shutil.rmtree(directory)
     os.makedirs(directory)
@@ -98,48 +98,40 @@ def mp_handler(num_procs, cmd_str_list):
 
 
 def main(flags, **kwargs):
-
     cmd_strings = list()
+
+    # Read the base config file which randomizes over other properties.
+    with open(flags.config_file_path, 'r') as f:
+        base_config_dict = json.load(f)
 
     # Generate a new config file randomly selecting from an FPA config.
     for sensor_num, device_num in zip(range(flags.num_sensors), cycle(flags.device)):
-
-        with open(flags.config_file_path, 'r') as f:
-
-            # Read the base config file which randomizes over other properties.
-            base_config_dict = json.load(f)
-
         config_dict = build_sensor_config(flags.num_samples,
                                           flags.num_frames_per_sample,
                                           base_config_dict)
 
         # Create a directory for this sensors runs.
-        sensor_name_str = "sensor_" + str(sensor_num)
+        sensor_name_str = f'sensor_{sensor_num}'
         sensor_dir = os.path.join(flags.output_dir, sensor_name_str)
-
         # Clear this sensor dir if it exists, then make it.
         make_clean_dir(sensor_dir)
 
         # Build a filename for this config.
-        sensor_json_file = "sensor_" + str(sensor_num) + ".json"
+        sensor_json_file = f'sensor_{sensor_num}.json'
         output_config_file = os.path.join(sensor_dir, sensor_json_file)
 
         # Write a JSON file in the new dir.
         with open(output_config_file, 'w') as fp:
-
             json.dump(config_dict, fp)
 
         if flags.debug_satsim:
-
-            cmd_str = "satsim --debug DEBUG run --device " + str(device_num) \
-                + " --memory " + str(flags.memory) + " --mode eager " \
-                + "--output_dir " + sensor_dir + " " + output_config_file
-
+            cmd_str = f'satsim --debug DEBUG run --device {device_num} ' \
+                      + f'--memory {flags.memory} --mode eager --output_dir' \
+                      + f' {sensor_dir} --jobs {flags.jobs} {output_config_file}'
         else:
-
-            cmd_str = "satsim run --device " + str(device_num) \
-                + " --memory " + str(flags.memory) + " --mode eager " \
-                + "--output_dir " + sensor_dir + " " + output_config_file
+            cmd_str = f'satsim run --device {device_num} --memory ' \
+                      + f'{flags.memory} --mode eager --output_dir ' \
+                      + f'{sensor_dir} --jobs {flags.jobs} {output_config_file}'
 
         cmd_strings.append(cmd_str)
         print(cmd_str)
@@ -147,12 +139,10 @@ def main(flags, **kwargs):
 
 
 if __name__ == '__main__':
-
     print(tf.__version__)
 
-    parser = argparse.ArgumentParser()
-
     # Set arguments and their default values
+    parser = argparse.ArgumentParser()
     parser.add_argument('--config_file_path', type=str,
                         default="satsim.json",
                         help='Path to the JSON config for SatSim.')
@@ -177,9 +167,12 @@ if __name__ == '__main__':
     parser.add_argument('--debug_satsim', action='store_true',
                         default=False,
                         help='If true, write annotated JPEGs to disk.')
+    parser.add_argument('--jobs', type=int,
+                        default=1,
+                        help='Number of jobs for each sensor per GPU.')
     parser.add_argument('--num_procs', type=int,
                         default=1,
-                        help='Number of parallel jobs to spawn over all GPUs.')
+                        help='Number of parallel processes to spawn over all GPUs.')
     parser.add_argument('--memory', type=int,
                         default=7000,
                         help='Max memory use per job in MB. Default = 7000 MB.')
