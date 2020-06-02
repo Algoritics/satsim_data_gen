@@ -5,7 +5,8 @@
         "spacial_osf": 15,
         "temporal_osf": 100,
         "padding": 100,
-        "samples": 50
+        "samples": 50,
+        "enable_shot_noise": false
     },
     "fpa": {
         "height": 512,
